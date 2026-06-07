@@ -107,9 +107,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       identifier: "\(Bundle.main.bundleIdentifier ?? "org.p0deje.Maccy").pasteBar",
       onClose: {}
     ) {
-      PasteBarView { [weak self] in
-        self?.pasteBarPanel.close()
-      }
+      PasteBarView(
+        close: { [weak self] in
+          self?.pasteBarPanel.close()
+        },
+        actionDispatcher: { [weak self] in
+          self?.pasteBarActionDispatcher
+        },
+        pasteTarget: { [weak self] in
+          self?.pasteBarPanel.pasteTarget
+        }
+      )
     }
 
     pasteBarActionDispatcher = PasteBarActionDispatcher { [weak self] in

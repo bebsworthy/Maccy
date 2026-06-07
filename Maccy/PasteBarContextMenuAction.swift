@@ -7,6 +7,6 @@ struct PasteBarContextMenuActionAvailability: Equatable {
   var canTogglePin = true
 
   static func availability(for adapter: PasteBarHistoryItemAdapter) -> Self {
-    return Self(canPreview: adapter.displayKind != .unknown)
+    return Self()
   }
 }

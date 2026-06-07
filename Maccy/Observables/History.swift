@@ -19,8 +19,15 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
   var pinnedItems: [HistoryItemDecorator] { items.filter(\.isPinned) }
   var unpinnedItems: [HistoryItemDecorator] { items.filter(\.isUnpinned) }
 
+  @ObservationIgnored
+  private var suppressSearchQuerySideEffects = false
+
   var searchQuery: String = "" {
     didSet {
+      guard !suppressSearchQuerySideEffects else {
+        return
+      }
+
       throttler.throttle { [self] in
         updateItems(search.search(string: searchQuery, within: all))
 
@@ -101,6 +108,12 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     }
   }
 
+  func setPasteBarSearchQuery(_ query: String) {
+    suppressSearchQuerySideEffects = true
+    searchQuery = query
+    suppressSearchQuerySideEffects = false
+  }
+
   @MainActor
   func load() async throws {
     let descriptor = FetchDescriptor<HistoryItem>()
@@ -115,6 +128,15 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     Task {
       AppState.shared.popup.needsResize = true
     }
+  }
+
+  @MainActor
+  func loadForPasteBar() async throws {
+    let descriptor = FetchDescriptor<HistoryItem>()
+    let results = try Storage.shared.context.fetch(descriptor)
+    all = sorter.sort(results).map { HistoryItemDecorator($0) }
+
+    updateShortcuts()
   }
 
   @MainActor
