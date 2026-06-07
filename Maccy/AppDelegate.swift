@@ -5,6 +5,7 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   var panel: FloatingPanel<ContentView>!
+  var pasteBarActionDispatcher: PasteBarActionDispatcher!
   var pasteBarPanel: PasteBarPanel<PasteBarView>!
 
   @objc
@@ -109,6 +110,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       PasteBarView { [weak self] in
         self?.pasteBarPanel.close()
       }
+    }
+
+    pasteBarActionDispatcher = PasteBarActionDispatcher { [weak self] in
+      self?.pasteBarPanel.close()
     }
 
     KeyboardShortcuts.onKeyDown(for: .pasteBar) { [weak self] in

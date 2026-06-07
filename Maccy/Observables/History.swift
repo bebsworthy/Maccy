@@ -286,6 +286,24 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
   }
 
   @MainActor
+  func deleteFromPasteBar(_ item: HistoryItemDecorator?) {
+    guard let item else { return }
+
+    cleanup(item)
+    withLogging("Removing history item from paste bar") {
+      Storage.shared.context.delete(item.item)
+      Storage.shared.context.processPendingChanges()
+      try? Storage.shared.context.save()
+    }
+
+    all.removeAll { $0 == item }
+    items.removeAll { $0 == item }
+    sessionLog.removeValues { $0 == item.item }
+
+    updateUnpinnedShortcuts()
+  }
+
+  @MainActor
   private func cleanup(_ item: HistoryItemDecorator) {
     item.cleanupImages()
   }
@@ -441,6 +459,22 @@ class History: ItemsContainer { // swiftlint:disable:this type_body_length
     if item.isUnpinned {
       AppState.shared.navigator.scrollTarget = item.id
     }
+  }
+
+  @MainActor
+  func togglePinFromPasteBar(_ item: HistoryItemDecorator?) {
+    guard let item else { return }
+
+    item.togglePin()
+
+    let sortedItems = sorter.sort(all.map(\.item))
+    if let currentIndex = all.firstIndex(of: item),
+       let newIndex = sortedItems.firstIndex(of: item.item) {
+      all.remove(at: currentIndex)
+      all.insert(item, at: newIndex)
+    }
+
+    updateUnpinnedShortcuts()
   }
 
   @MainActor

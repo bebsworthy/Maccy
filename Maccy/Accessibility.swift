@@ -1,11 +1,19 @@
 import AppKit
 
 struct Accessibility {
-  private static var allowed: Bool { AXIsProcessTrustedWithOptions(nil) }
+  static var isTrusted: Bool { AXIsProcessTrustedWithOptions(nil) }
 
   static func check() {
-    guard !allowed else {
+    guard !isTrusted else {
       return
     }
   }
+}
+
+protocol AccessibilityTrustChecking {
+  var isTrusted: Bool { get }
+}
+
+struct SystemAccessibilityTrustChecker: AccessibilityTrustChecking {
+  var isTrusted: Bool { Accessibility.isTrusted }
 }

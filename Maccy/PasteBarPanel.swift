@@ -6,17 +6,21 @@ private let escapeKeyCode: UInt16 = 53
 
 class PasteBarPanel<Content: View>: NSPanel, NSWindowDelegate {
   var isPresented = false
+  private(set) var pasteTarget: PasteBarPasteTarget?
 
   private let onClose: () -> Void
+  private let pasteTargetRestorer: PasteBarPasteTargetRestoring
   private let rootView: () -> Content
 
   init(
     contentRect: NSRect = NSRect(origin: .zero, size: PasteBarPanelMetrics.defaultSize),
     identifier: String = "",
     onClose: @escaping () -> Void,
+    pasteTargetRestorer: PasteBarPasteTargetRestoring = SystemPasteBarPasteTargetRestorer(),
     view: @escaping () -> Content
   ) {
     self.onClose = onClose
+    self.pasteTargetRestorer = pasteTargetRestorer
     self.rootView = view
 
     super.init(
@@ -60,6 +64,8 @@ class PasteBarPanel<Content: View>: NSPanel, NSWindowDelegate {
   }
 
   func open(position: PasteBarPosition = Defaults[.pasteBarPosition]) {
+    pasteTarget = pasteTargetRestorer.capture()
+
     let screen = NSScreen.forPopup ?? NSScreen.main
     let visibleFrame = screen?.visibleFrame ?? .zero
     let maxWidth = max(
