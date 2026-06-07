@@ -19,6 +19,7 @@ class ClipboardTests: XCTestCase {
   let tiffType = NSPasteboard.PasteboardType.tiff
   let transientType = NSPasteboard.PasteboardType.transient
   let unknownType = NSPasteboard.PasteboardType(rawValue: "com.apple.AnnotationKit.AnnotationItem")
+  let testSourceApp = "org.maccy.tests.source"
 
   let savedEnabledTypes = Defaults[.enabledPasteboardTypes]
   let savedIgnoreEvents = Defaults[.ignoreEvents]
@@ -40,6 +41,10 @@ class ClipboardTests: XCTestCase {
     Defaults[.ignoreAllAppsExceptListed] = savedIgnoreAllAppsExceptListed
     Defaults[.ignoredApps] = savedIgnoredApps
     Defaults[.ignoredPasteboardTypes] = savedIgnoredPasteboardTypes
+    clipboard.sourceAppBundleIdentifierProvider = {
+      NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+    }
+    clipboard.stop()
     clipboard.clearHooks()
   }
 
@@ -137,7 +142,8 @@ class ClipboardTests: XCTestCase {
   }
 
   func testIgnoreApplication() {
-    Defaults[.ignoredApps] = ["com.apple.dt.Xcode", "com.apple.finder"] // Finder is on Bitrise
+    clipboard.sourceAppBundleIdentifierProvider = { self.testSourceApp }
+    Defaults[.ignoredApps] = [testSourceApp]
 
     let hookExpectation = expectation(description: "Hook is called")
     hookExpectation.isInverted = true
@@ -152,7 +158,8 @@ class ClipboardTests: XCTestCase {
 
   func testIgnoreAllApplicationsExcept() {
     Defaults[.ignoreAllAppsExceptListed] = true
-    Defaults[.ignoredApps] = ["com.apple.dt.Xcode", "com.apple.finder"] // Finder is on Bitrise
+    clipboard.sourceAppBundleIdentifierProvider = { self.testSourceApp }
+    Defaults[.ignoredApps] = [testSourceApp]
 
     let hookExpectation = expectation(description: "Hook is called")
     clipboard.onNewCopy({ (_: HistoryItem) in

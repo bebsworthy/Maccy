@@ -13,6 +13,9 @@ class Clipboard {
   private let pasteboard = NSPasteboard.general
 
   private var timer: Timer?
+  var sourceAppBundleIdentifierProvider: () -> String? = {
+    NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+  }
 
   private let dynamicTypePrefix = "dyn."
   private let microsoftSourcePrefix = "com.microsoft.ole.source."
@@ -48,6 +51,8 @@ class Clipboard {
   }
 
   func start() {
+    stop()
+
     timer = Timer.scheduledTimer(
       timeInterval: Defaults[.clipboardCheckInterval],
       target: self,
@@ -57,8 +62,12 @@ class Clipboard {
     )
   }
 
-  func restart() {
+  func stop() {
     timer?.invalidate()
+    timer = nil
+  }
+
+  func restart() {
     start()
   }
 
@@ -176,7 +185,8 @@ class Clipboard {
       return
     }
 
-    if let sourceAppBundle = sourceApp?.bundleIdentifier, shouldIgnore(sourceAppBundle) {
+    let sourceAppBundle = sourceAppBundleIdentifierProvider()
+    if let sourceAppBundle, shouldIgnore(sourceAppBundle) {
       return
     }
 
@@ -223,7 +233,7 @@ class Clipboard {
       try? History.shared.insertIntoStorage(historyItem)
     }
 
-    historyItem.application = sourceApp?.bundleIdentifier
+    historyItem.application = sourceAppBundle
     historyItem.title = historyItem.generateTitle()
 
     onNewCopyHooks.forEach({ $0(historyItem) })
