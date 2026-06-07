@@ -5,6 +5,7 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   var panel: FloatingPanel<ContentView>!
+  var pasteBarPanel: PasteBarPanel<PasteBarView>!
 
   @objc
   private lazy var statusItem: NSStatusItem = {
@@ -99,6 +100,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       onClose: { AppState.shared.popup.reset() }
     ) {
       ContentView()
+    }
+
+    pasteBarPanel = PasteBarPanel(
+      identifier: "\(Bundle.main.bundleIdentifier ?? "org.p0deje.Maccy").pasteBar",
+      onClose: {}
+    ) {
+      PasteBarView { [weak self] in
+        self?.pasteBarPanel.close()
+      }
+    }
+
+    KeyboardShortcuts.onKeyDown(for: .pasteBar) { [weak self] in
+      self?.pasteBarPanel.toggle()
     }
   }
 
