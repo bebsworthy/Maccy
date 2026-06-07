@@ -2,6 +2,12 @@ import AppKit
 
 struct PasteBarHistoryItemAdapter: Identifiable, Equatable, Search.SearchableText {
   let decorator: HistoryItemDecorator
+  let displayKind: PasteBarDisplayKind
+
+  init(decorator: HistoryItemDecorator) {
+    self.decorator = decorator
+    self.displayKind = PasteBarDisplayKind.classify(decorator.item)
+  }
 
   var id: UUID { decorator.id }
   var item: HistoryItem { decorator.item }
@@ -12,7 +18,6 @@ struct PasteBarHistoryItemAdapter: Identifiable, Equatable, Search.SearchableTex
   var isPinned: Bool { decorator.isPinned }
   var sourceAppName: String? { decorator.application }
   var sourceAppImage: ApplicationImage { decorator.applicationImage }
-  var displayKind: PasteBarDisplayKind { PasteBarDisplayKind.classify(item) }
   var text: String? { item.text }
   var previewText: String { decorator.text }
   var fileURLs: [URL] { item.fileURLs }

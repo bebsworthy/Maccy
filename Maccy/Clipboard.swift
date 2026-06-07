@@ -6,8 +6,9 @@ class Clipboard {
   static let shared = Clipboard()
 
   typealias OnNewCopyHook = (HistoryItem) -> Void
+  typealias OnNewCopyHookToken = UUID
 
-  private var onNewCopyHooks: [OnNewCopyHook] = []
+  private var onNewCopyHooks: [(token: OnNewCopyHookToken, hook: OnNewCopyHook)] = []
   var changeCount: Int
 
   private let pasteboard = NSPasteboard.general
@@ -42,8 +43,17 @@ class Clipboard {
     changeCount = pasteboard.changeCount
   }
 
-  func onNewCopy(_ hook: @escaping OnNewCopyHook) {
-    onNewCopyHooks.append(hook)
+  @discardableResult
+  func onNewCopy(_ hook: @escaping OnNewCopyHook) -> OnNewCopyHookToken {
+    let token = OnNewCopyHookToken()
+    onNewCopyHooks.append((token, hook))
+    return token
+  }
+
+  func removeNewCopyHook(_ token: OnNewCopyHookToken?) {
+    guard let token else { return }
+
+    onNewCopyHooks.removeAll { $0.token == token }
   }
 
   func clearHooks() {
@@ -236,7 +246,7 @@ class Clipboard {
     historyItem.application = sourceAppBundle
     historyItem.title = historyItem.generateTitle()
 
-    onNewCopyHooks.forEach({ $0(historyItem) })
+    onNewCopyHooks.forEach { $0.hook(historyItem) }
   }
 
   private func shouldIgnore(_ types: Set<NSPasteboard.PasteboardType>) -> Bool {

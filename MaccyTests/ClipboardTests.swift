@@ -31,6 +31,9 @@ class ClipboardTests: XCTestCase {
     super.setUp()
     Defaults[.ignoreAllAppsExceptListed] = false
     Defaults[.ignoreEvents] = false
+    clipboard.stop()
+    clipboard.clearHooks()
+    clipboard.changeCount = pasteboard.changeCount
   }
 
   override func tearDown() {
@@ -53,6 +56,25 @@ class ClipboardTests: XCTestCase {
     clipboard.onNewCopy({ (_: HistoryItem) in
       hookExpectation.fulfill()
     })
+    clipboard.start()
+    pasteboard.declareTypes([.string], owner: nil)
+    pasteboard.setString("bar", forType: .string)
+    waitForExpectations(timeout: 2)
+  }
+
+  func testRemoveNewCopyHookKeepsOtherHooksRegistered() {
+    let removedExpectation = expectation(description: "Removed hook is not called")
+    removedExpectation.isInverted = true
+    let activeExpectation = expectation(description: "Active hook is called")
+
+    let removedToken = clipboard.onNewCopy({ (_: HistoryItem) in
+      removedExpectation.fulfill()
+    })
+    clipboard.onNewCopy({ (_: HistoryItem) in
+      activeExpectation.fulfill()
+    })
+    clipboard.removeNewCopyHook(removedToken)
+
     clipboard.start()
     pasteboard.declareTypes([.string], owner: nil)
     pasteboard.setString("bar", forType: .string)
@@ -124,6 +146,9 @@ class ClipboardTests: XCTestCase {
   }
 
   func testIgnoreOnlyNextEventIsEnabled() {
+    pasteboard.clearContents()
+    clipboard.changeCount = pasteboard.changeCount
+
     Defaults[.ignoreEvents] = true
     Defaults[.ignoreOnlyNextEvent] = true
 
@@ -132,10 +157,12 @@ class ClipboardTests: XCTestCase {
     clipboard.onNewCopy({ (_: HistoryItem) in
       hookExpectation.fulfill()
     })
-    clipboard.start()
+
     pasteboard.declareTypes([.string], owner: nil)
-    pasteboard.setString("foo", forType: .string)
-    waitForExpectations(timeout: 2)
+    MainActor.assumeIsolated {
+      clipboard.checkForChangesInPasteboard()
+    }
+    wait(for: [hookExpectation], timeout: 0.1)
 
     XCTAssertFalse(Defaults[.ignoreEvents])
     XCTAssertFalse(Defaults[.ignoreOnlyNextEvent])

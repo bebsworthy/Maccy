@@ -3,9 +3,15 @@ import Sauce
 import SwiftHEXColors
 import SwiftUI
 
-private let pasteBarCardWidth: CGFloat = 190
-private let pasteBarCardHeight: CGFloat = 148
-private let pasteBarPreviewHeight: CGFloat = 82
+private let pasteBarRelativeTimeFormatter = PasteBarRelativeTimeFormatter()
+
+enum PasteBarCardMetrics {
+  static let width: CGFloat = 214
+  static let height: CGFloat = 170
+  static let previewHeight: CGFloat = 104
+  static let padding: CGFloat = 10
+  static let cornerRadius: CGFloat = 10
+}
 
 struct PasteBarCardView: View {
   let item: PasteBarHistoryItemAdapter
@@ -14,19 +20,25 @@ struct PasteBarCardView: View {
   let isHovered: Bool
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading, spacing: 6) {
       header
       preview
-      footer
+      metadataLine
     }
-    .padding(10)
-    .frame(width: pasteBarCardWidth, height: pasteBarCardHeight, alignment: .topLeading)
-    .background(backgroundStyle, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .padding(PasteBarCardMetrics.padding)
+    .frame(width: PasteBarCardMetrics.width, height: PasteBarCardMetrics.height, alignment: .topLeading)
+    .background(
+      backgroundStyle,
+      in: RoundedRectangle(cornerRadius: PasteBarCardMetrics.cornerRadius, style: .continuous)
+    )
+    .clipShape(RoundedRectangle(cornerRadius: PasteBarCardMetrics.cornerRadius, style: .continuous))
     .overlay {
-      RoundedRectangle(cornerRadius: 8, style: .continuous)
-        .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.18), lineWidth: isSelected ? 3 : 1)
+      RoundedRectangle(cornerRadius: PasteBarCardMetrics.cornerRadius, style: .continuous)
+        .stroke(isSelected ? Color.accentColor : Color.primary.opacity(0.08), lineWidth: isSelected ? 2 : 1)
     }
-    .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .shadow(color: Color.black.opacity(isSelected ? 0.12 : 0.06), radius: isSelected ? 6 : 3, y: 2)
+    .contentShape(RoundedRectangle(cornerRadius: PasteBarCardMetrics.cornerRadius, style: .continuous))
+    .clipped()
     .accessibilityElement(children: .combine)
     .accessibilityLabel(accessibilityLabel)
     .accessibilityAddTraits(isSelected ? [.isSelected] : [])
@@ -41,46 +53,50 @@ struct PasteBarCardView: View {
     }
 
     if isHovered {
-      return AnyShapeStyle(Color.secondary.opacity(0.16))
+      return AnyShapeStyle(.regularMaterial)
     }
 
-    return AnyShapeStyle(.regularMaterial)
+    return AnyShapeStyle(.thinMaterial)
   }
 
   private var header: some View {
     HStack(spacing: 6) {
-      Text(item.displayKind.label)
-        .font(.caption)
+      Text(item.displayKind.cardLabel)
+        .font(.subheadline)
         .fontWeight(.semibold)
         .lineLimit(1)
+        .truncationMode(.tail)
+        .fixedSize(horizontal: false, vertical: false)
 
-      Text(item.copiedAt, style: .relative)
+      Text(pasteBarRelativeTimeFormatter.string(for: item.copiedAt))
         .font(.caption)
         .foregroundStyle(.secondary)
         .lineLimit(1)
+        .minimumScaleFactor(0.85)
+        .fixedSize(horizontal: false, vertical: false)
 
       Spacer(minLength: 0)
 
-      if item.isPinned {
-        Image(systemName: "pin.fill")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .accessibilityLabel("Pinned")
-      }
+      sourceAppBadge
 
       if index < 9 {
         KeyboardShortcutView(shortcut: quickShortcut(for: index))
           .font(.caption)
-          .frame(minWidth: 22, alignment: .trailing)
+          .foregroundStyle(.secondary)
+          .frame(minWidth: 18, alignment: .trailing)
+          .minimumScaleFactor(0.85)
+          .fixedSize(horizontal: false, vertical: false)
           .accessibilityLabel("Command \(index + 1)")
       }
     }
+    .frame(height: 20)
+    .clipped()
   }
 
   @ViewBuilder
   private var preview: some View {
     ZStack {
-      RoundedRectangle(cornerRadius: 6, style: .continuous)
+      RoundedRectangle(cornerRadius: 8, style: .continuous)
         .fill(Color.secondary.opacity(0.08))
 
       switch item.displayKind {
@@ -94,35 +110,47 @@ struct PasteBarCardView: View {
         richTextPreview
       case .emoji:
         emojiPreview
-      case .code, .table:
+      case .code:
+        codePreview
+      case .table:
         textPreview(monospaced: true)
-      case .link, .emailAddress, .phoneNumber, .plainText:
+      case .link:
+        linkPreview
+      case .emailAddress, .phoneNumber, .plainText:
         textPreview(monospaced: false)
       case .unknown:
         unknownPreview
       }
     }
-    .frame(height: pasteBarPreviewHeight)
-    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    .frame(maxWidth: .infinity)
+    .frame(height: PasteBarCardMetrics.previewHeight)
+    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    .clipped()
   }
 
-  private var footer: some View {
-    VStack(alignment: .leading, spacing: 3) {
-      HStack(spacing: 4) {
-        AppImageView(appImage: item.sourceAppImage, size: CGSize(width: 14, height: 14))
+  private var metadataLine: some View {
+    Text(PasteBarCardMetadataFormatter.string(for: item))
+      .font(.caption)
+      .foregroundStyle(.secondary)
+      .lineLimit(1)
+      .truncationMode(.middle)
+      .minimumScaleFactor(0.85)
+      .fixedSize(horizontal: false, vertical: false)
+      .frame(maxWidth: .infinity, minHeight: 14, maxHeight: 14, alignment: .leading)
+    .clipped()
+  }
 
-        Text(item.sourceAppName ?? "Unknown App")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .lineLimit(1)
-      }
-
-      Text(metadata)
-        .font(.caption2)
+  @ViewBuilder
+  private var sourceAppBadge: some View {
+    if item.isPinned {
+      Image(systemName: "pin.fill")
+        .font(.caption)
         .foregroundStyle(.secondary)
-        .lineLimit(1)
-        .truncationMode(.middle)
+        .accessibilityLabel("Pinned")
     }
+
+    AppImageView(appImage: item.sourceAppImage, size: CGSize(width: 16, height: 16))
+      .accessibilityLabel(item.sourceAppName ?? "Unknown App")
   }
 
   @ViewBuilder
@@ -131,12 +159,16 @@ struct PasteBarCardView: View {
       Image(nsImage: image)
         .resizable()
         .scaledToFill()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
     } else if let url = item.fileURLs.first {
       fileIcon(url)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     } else {
       Image(systemName: "photo")
         .font(.title)
         .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
   }
 
@@ -150,41 +182,90 @@ struct PasteBarCardView: View {
           .foregroundStyle(.secondary)
       }
 
-      Text(item.fileURLs.count > 1 ? "\(item.fileURLs.count) items" : (item.fileURLs.first?.lastPathComponent ?? "File"))
-        .font(.caption)
+      Text(filePreviewTitle)
+        .font(.subheadline)
         .lineLimit(1)
         .truncationMode(.middle)
         .padding(.horizontal, 8)
+        .fixedSize(horizontal: false, vertical: false)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .clipped()
   }
 
   @ViewBuilder
   private var colorPreview: some View {
     if let color = colorFromText {
       color
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
         .overlay {
           Text(item.text ?? item.summary)
-            .font(.headline)
+            .font(.callout)
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .fixedSize(horizontal: false, vertical: false)
             .foregroundStyle(.primary)
             .padding(6)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
     } else {
       textPreview(monospaced: false)
     }
   }
 
+  @ViewBuilder
   private var richTextPreview: some View {
-    ScrollView {
-      if let attributed = attributedPreview {
-        Text(attributed.string)
-          .font(.caption)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(8)
-      } else {
-        textPreview(monospaced: false)
-      }
+    if let attributed = attributedPreview {
+      Text(attributed.string)
+        .font(.callout)
+        .lineLimit(5)
+        .truncationMode(.tail)
+        .fixedSize(horizontal: false, vertical: false)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(9)
+        .clipped()
+    } else {
+      textPreview(monospaced: false)
     }
+  }
+
+  private var codePreview: some View {
+    Text(item.previewText.isEmpty ? item.summary : item.previewText)
+      .font(.system(.caption, design: .monospaced))
+      .foregroundStyle(Color(nsColor: .textBackgroundColor))
+      .lineLimit(6)
+      .truncationMode(.tail)
+      .fixedSize(horizontal: false, vertical: false)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .padding(10)
+      .background(Color(nsColor: .textColor).opacity(0.88))
+      .clipped()
+  }
+
+  private var linkPreview: some View {
+    VStack(alignment: .leading, spacing: 7) {
+      Image(systemName: "link.circle.fill")
+        .font(.title2)
+        .foregroundStyle(.secondary)
+
+      Text(item.summary)
+        .font(.callout)
+        .fontWeight(.regular)
+        .lineLimit(2)
+        .truncationMode(.tail)
+        .fixedSize(horizontal: false, vertical: false)
+
+      Text(linkHost ?? item.text ?? "")
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .truncationMode(.middle)
+        .fixedSize(horizontal: false, vertical: false)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    .padding(10)
+    .clipped()
   }
 
   private var emojiPreview: some View {
@@ -193,16 +274,19 @@ struct PasteBarCardView: View {
       .lineLimit(1)
       .minimumScaleFactor(0.5)
       .padding(8)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .clipped()
   }
 
   private func textPreview(monospaced: Bool) -> some View {
-    ScrollView {
-      Text(item.previewText.isEmpty ? item.summary : item.previewText)
-        .font(monospaced ? .system(.caption, design: .monospaced) : .caption)
-        .lineLimit(5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(8)
-    }
+    Text(item.previewText.isEmpty ? item.summary : item.previewText)
+      .font(monospaced ? .system(.caption, design: .monospaced) : .callout)
+      .lineLimit(6)
+      .truncationMode(.tail)
+      .fixedSize(horizontal: false, vertical: false)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+      .padding(10)
+      .clipped()
   }
 
   private var unknownPreview: some View {
@@ -214,6 +298,8 @@ struct PasteBarCardView: View {
         .font(.caption)
         .foregroundStyle(.secondary)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .clipped()
   }
 
   private func fileIcon(_ url: URL) -> some View {
@@ -221,6 +307,7 @@ struct PasteBarCardView: View {
       .resizable()
       .scaledToFit()
       .frame(width: 42, height: 42)
+      .clipped()
   }
 
   private var attributedPreview: NSAttributedString? {
@@ -237,20 +324,18 @@ struct PasteBarCardView: View {
     return Color(nsColor: nsColor)
   }
 
-  private var metadata: String {
-    if !item.fileURLs.isEmpty {
-      return item.fileURLs.count == 1 ? item.fileURLs[0].deletingLastPathComponent().path : "\(item.fileURLs.count) files"
+  private var filePreviewTitle: String {
+    item.fileURLs.count > 1 ? "\(item.fileURLs.count) items" : (item.fileURLs.first?.lastPathComponent ?? "File")
+  }
+
+  private var linkHost: String? {
+    guard let text = item.text,
+          let url = URL(string: text)
+    else {
+      return nil
     }
 
-    if let text = item.text, !text.isEmpty {
-      return "\(text.count) characters"
-    }
-
-    if item.image != nil {
-      return "Image data"
-    }
-
-    return item.displayKind.label
+    return url.host
   }
 
   private var accessibilityLabel: String {
@@ -258,7 +343,7 @@ struct PasteBarCardView: View {
     if let sourceAppName = item.sourceAppName {
       parts.append(sourceAppName)
     }
-    parts.append(metadata)
+    parts.append(PasteBarCardMetadataFormatter.string(for: item))
     return parts.joined(separator: ", ")
   }
 
@@ -269,5 +354,75 @@ struct PasteBarCardView: View {
     }
 
     return KeyShortcut(key: keys[index], modifierFlags: [.command])
+  }
+}
+
+enum PasteBarCardMetadataFormatter {
+  static func string(for item: PasteBarHistoryItemAdapter) -> String {
+    switch item.displayKind {
+    case .image, .imageFile:
+      return "Image"
+    case .multipleFiles:
+      return "\(item.fileURLs.count) files"
+    case .file, .folder, .pdf, .archive:
+      return item.fileURLs.first?.lastPathComponent ?? item.displayKind.label
+    case .link:
+      return linkHost(for: item) ?? "Link"
+    case .emailAddress:
+      return "Email"
+    case .phoneNumber:
+      return "Phone"
+    case .color:
+      return "Color"
+    case .emoji:
+      return "Emoji"
+    case .html:
+      return "HTML"
+    case .richText:
+      return "Rich Text"
+    case .code:
+      return "Code"
+    case .table:
+      return "Table"
+    case .plainText:
+      return characterCount(for: item)
+    case .unknown:
+      return item.displayKind.label
+    }
+  }
+
+  private static func characterCount(for item: PasteBarHistoryItemAdapter) -> String {
+    guard let text = item.text, !text.isEmpty else {
+      return item.displayKind.label
+    }
+
+    return "\(text.count) characters"
+  }
+
+  private static func linkHost(for item: PasteBarHistoryItemAdapter) -> String? {
+    guard let text = item.text,
+          let url = URL(string: text)
+    else {
+      return nil
+    }
+
+    return url.host
+  }
+}
+
+private extension PasteBarDisplayKind {
+  var cardLabel: String {
+    switch self {
+    case .emailAddress:
+      return "Email"
+    case .multipleFiles:
+      return "Files"
+    case .phoneNumber:
+      return "Phone"
+    case .plainText, .richText:
+      return "Text"
+    default:
+      return label
+    }
   }
 }

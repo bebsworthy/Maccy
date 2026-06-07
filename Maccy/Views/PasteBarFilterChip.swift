@@ -10,29 +10,29 @@ struct PasteBarFilterChip: View {
     Button(action: action) {
       HStack(spacing: 5) {
         Image(systemName: iconName)
-          .font(.caption)
+          .imageScale(.small)
 
-        Text(filter.label)
+        Text(displayLabel)
           .lineLimit(1)
-
-        Text("\(count)")
-          .font(.caption2)
-          .foregroundStyle(.secondary)
       }
-      .font(.caption)
-      .padding(.horizontal, 9)
-      .frame(height: 24)
-      .background(
-        isSelected ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.10),
-        in: Capsule()
-      )
-      .overlay {
-        Capsule()
-          .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.16), lineWidth: 1)
-      }
+      .font(.callout)
+      .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+      .frame(minWidth: 0)
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.bordered)
+    .buttonBorderShape(.roundedRectangle(radius: 7))
+    .controlSize(.small)
+    .tint(isSelected ? .accentColor : .primary.opacity(0.20))
     .accessibilityLabel("\(filter.label), \(count) items")
+  }
+
+  private var displayLabel: String {
+    switch filter {
+    case .all:
+      return "Clipboard"
+    default:
+      return filter.label
+    }
   }
 
   private var iconName: String {

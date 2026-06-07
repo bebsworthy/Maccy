@@ -1,6 +1,25 @@
 import Foundation
 
 @MainActor
+struct PasteBarHistorySnapshot {
+  private(set) var adapters: [PasteBarHistoryItemAdapter] = []
+
+  var items: [HistoryItemDecorator] {
+    adapters.map(\.decorator)
+  }
+
+  mutating func refresh(from items: [HistoryItemDecorator]) {
+    adapters = items
+      .map(PasteBarHistoryItemAdapter.init(decorator:))
+      .sorted { $0.copiedAt > $1.copiedAt }
+  }
+
+  mutating func refresh(from history: History) {
+    refresh(from: history.all)
+  }
+}
+
+@MainActor
 struct PasteBarResultProvider {
   var history: History
   var search: Search
@@ -19,16 +38,27 @@ struct PasteBarResultProvider {
     query: String,
     filter: PasteBarFilter = .all
   ) -> [PasteBarHistoryItemAdapter] {
-    let adapters = decorators
-      .map(PasteBarHistoryItemAdapter.init)
+    return results(
+      from: decorators.map(PasteBarHistoryItemAdapter.init(decorator:)),
+      query: query,
+      filter: filter
+    )
+  }
+
+  func results(
+    from adapters: [PasteBarHistoryItemAdapter],
+    query: String,
+    filter: PasteBarFilter = .all
+  ) -> [PasteBarHistoryItemAdapter] {
+    let filteredAdapters = adapters
       .filter(filter.includes)
       .sorted { $0.copiedAt > $1.copiedAt }
 
     guard !query.isEmpty else {
-      return adapters
+      return filteredAdapters
     }
 
-    return search.search(string: query, within: adapters)
+    return search.search(string: query, within: filteredAdapters)
       .map(\.object)
       .sorted { $0.copiedAt > $1.copiedAt }
   }
@@ -38,7 +68,10 @@ struct PasteBarResultProvider {
   }
 
   func filters(from decorators: [HistoryItemDecorator]) -> [PasteBarFilter] {
-    let adapters = decorators.map(PasteBarHistoryItemAdapter.init)
+    return filters(from: decorators.map(PasteBarHistoryItemAdapter.init(decorator:)))
+  }
+
+  func filters(from adapters: [PasteBarHistoryItemAdapter]) -> [PasteBarFilter] {
     let sourceAppFilters = Set(adapters.compactMap(\.sourceAppName))
       .sorted()
       .map(PasteBarFilter.sourceApp)
@@ -47,5 +80,40 @@ struct PasteBarResultProvider {
       .map(PasteBarFilter.displayKind)
 
     return [.all, .pinned, .unpinned] + sourceAppFilters + displayKindFilters
+  }
+
+  func counts(from adapters: [PasteBarHistoryItemAdapter]) -> [PasteBarFilter: Int] {
+    let filters = filters(from: adapters)
+    return Dictionary(uniqueKeysWithValues: filters.map { filter in
+      (filter, adapters.filter(filter.includes).count)
+    })
+  }
+}
+
+struct PasteBarRelativeTimeFormatter {
+  var now: () -> Date = Date.init
+
+  func string(for date: Date) -> String {
+    let elapsedSeconds = max(0, Int(now().timeIntervalSince(date)))
+
+    if elapsedSeconds < 5 {
+      return "now"
+    }
+
+    if elapsedSeconds < 60 {
+      return "<1 min"
+    }
+
+    let elapsedMinutes = elapsedSeconds / 60
+    if elapsedMinutes < 60 {
+      return "\(elapsedMinutes) min"
+    }
+
+    let elapsedHours = elapsedMinutes / 60
+    if elapsedHours < 24 {
+      return "\(elapsedHours) hr"
+    }
+
+    return "\(elapsedHours / 24) d"
   }
 }

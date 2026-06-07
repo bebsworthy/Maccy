@@ -77,7 +77,7 @@ class PasteBarPanel<Content: View>: NSPanel, NSWindowDelegate {
       visibleFrame.height - PasteBarPanelMetrics.edgePadding * 2
     )
     let size = NSSize(
-      width: min(PasteBarPanelMetrics.defaultSize.width, maxWidth),
+      width: maxWidth,
       height: min(PasteBarPanelMetrics.defaultSize.height, maxHeight)
     )
 

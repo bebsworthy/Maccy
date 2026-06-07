@@ -125,6 +125,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     KeyboardShortcuts.onKeyDown(for: .pasteBar) { [weak self] in
+      Clipboard.shared.checkForChangesInPasteboard()
       self?.pasteBarPanel.toggle()
     }
   }
