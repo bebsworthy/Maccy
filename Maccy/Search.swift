@@ -3,6 +3,10 @@ import Defaults
 import Fuse
 
 class Search {
+  protocol SearchableText {
+    var searchableText: String { get }
+  }
+
   enum Mode: String, CaseIterable, Identifiable, CustomStringConvertible, Defaults.Serializable {
     case exact
     case fuzzy
@@ -25,20 +29,21 @@ class Search {
     }
   }
 
-  struct SearchResult: Equatable {
+  struct Result<Object: SearchableText & Equatable>: Equatable {
     var score: Double?
-    var object: Searchable
+    var object: Object
     var ranges: [Range<String.Index>] = []
   }
 
   typealias Searchable = HistoryItemDecorator
+  typealias SearchResult = Result<HistoryItemDecorator>
 
   private let fuse = Fuse(threshold: 0.7) // threshold found by trial-and-error
   private let fuzzySearchLimit = 5_000
 
-  func search(string: String, within: [Searchable]) -> [SearchResult] {
+  func search<Object: SearchableText & Equatable>(string: String, within: [Object]) -> [Result<Object>] {
     guard !string.isEmpty else {
-      return within.map { SearchResult(object: $0) }
+      return within.map { Result(object: $0) }
     }
 
     switch Defaults[.searchMode] {
@@ -53,20 +58,23 @@ class Search {
     }
   }
 
-  private func fuzzySearch(string: String, within: [Searchable]) -> [SearchResult] {
+  private func fuzzySearch<Object: SearchableText & Equatable>(
+    string: String,
+    within: [Object]
+  ) -> [Result<Object>] {
     let pattern = fuse.createPattern(from: string)
-    let searchResults: [SearchResult] = within.compactMap { item in
-      fuzzySearch(for: pattern, in: item.title, of: item)
+    let searchResults: [Result<Object>] = within.compactMap { item in
+      fuzzySearch(for: pattern, in: item.searchableText, of: item)
     }
     let sortedResults = searchResults.sorted(by: { ($0.score ?? 0) < ($1.score ?? 0) })
     return sortedResults
   }
 
-  private func fuzzySearch(
+  private func fuzzySearch<Object: SearchableText & Equatable>(
     for pattern: Fuse.Pattern?,
     in searchString: String,
-    of item: Searchable
-  ) -> SearchResult? {
+    of item: Object
+  ) -> Result<Object>? {
     var searchString = searchString
     if searchString.count > fuzzySearchLimit {
       // shortcut to avoid slow search
@@ -75,7 +83,7 @@ class Search {
     }
 
     if let fuzzyResult = fuse.search(pattern, in: searchString) {
-      return SearchResult(
+      return Result(
         score: fuzzyResult.score,
         object: item,
         ranges: fuzzyResult.ranges.map {
@@ -91,28 +99,31 @@ class Search {
     }
   }
 
-  private func simpleSearch(
+  private func simpleSearch<Object: SearchableText & Equatable>(
     string: String,
-    within: [Searchable],
+    within: [Object],
     options: NSString.CompareOptions
-  ) -> [SearchResult] {
-    return within.compactMap { simpleSearch(for: string, in: $0.title, of: $0, options: options) }
+  ) -> [Result<Object>] {
+    return within.compactMap { simpleSearch(for: string, in: $0.searchableText, of: $0, options: options) }
   }
 
-  private func simpleSearch(
+  private func simpleSearch<Object: SearchableText & Equatable>(
     for string: String,
     in searchString: String,
-    of item: Searchable,
+    of item: Object,
     options: NSString.CompareOptions
-  ) -> SearchResult? {
+  ) -> Result<Object>? {
     if let range = searchString.range(of: string, options: options, range: nil, locale: nil) {
-      return SearchResult(object: item, ranges: [range])
+      return Result(object: item, ranges: [range])
     } else {
       return nil
     }
   }
 
-  private func mixedSearch(string: String, within: [Searchable]) -> [SearchResult] {
+  private func mixedSearch<Object: SearchableText & Equatable>(
+    string: String,
+    within: [Object]
+  ) -> [Result<Object>] {
     var results = simpleSearch(string: string, within: within, options: .caseInsensitive)
     guard results.isEmpty else {
       return results
@@ -130,4 +141,8 @@ class Search {
 
     return []
   }
+}
+
+extension HistoryItemDecorator: Search.SearchableText {
+  var searchableText: String { title }
 }

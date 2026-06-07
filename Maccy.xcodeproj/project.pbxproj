@@ -36,6 +36,13 @@
 		CBC016F5D2CC4C4D9AC04077 /* PasteBarPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2643BD06AABE48D5AF9F50FE /* PasteBarPanel.swift */; };
 		D271404540E649E9AB9A655D /* PasteBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D1C0EC2BCE4129AE5D8954 /* PasteBarView.swift */; };
 		F9C4425A454F4A0696A62577 /* PasteBarPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 846F4BBE79D34DF898294F5A /* PasteBarPosition.swift */; };
+		2FC0D0022F40000100C0D001 /* PasteBarDisplayKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D0012F40000100C0D001 /* PasteBarDisplayKind.swift */; };
+		2FC0D0042F40000100C0D001 /* PasteBarFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D0032F40000100C0D001 /* PasteBarFilter.swift */; };
+		2FC0D0062F40000100C0D001 /* PasteBarHistoryItemAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D0052F40000100C0D001 /* PasteBarHistoryItemAdapter.swift */; };
+		2FC0D0082F40000100C0D001 /* PasteBarSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D0072F40000100C0D001 /* PasteBarSelection.swift */; };
+		2FC0D00A2F40000100C0D001 /* PasteBarResultProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D0092F40000100C0D001 /* PasteBarResultProvider.swift */; };
+		2FC0D00C2F40000100C0D001 /* PasteBarDisplayKindTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D00B2F40000100C0D001 /* PasteBarDisplayKindTests.swift */; };
+		2FC0D00E2F40000100C0D001 /* PasteBarResultProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FC0D00D2F40000100C0D001 /* PasteBarResultProviderTests.swift */; };
 		4762D6972467226100B3A2BA /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4762D6992467226100B3A2BA /* Localizable.strings */; };
 		DA009931256411F90030E697 /* appcast.xml in Resources */ = {isa = PBXBuildFile; fileRef = DA00992C256411F90030E697 /* appcast.xml */; };
 		DA009932256411F90030E697 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DA00992D256411F90030E697 /* README.md */; };
@@ -211,6 +218,13 @@
 		2643BD06AABE48D5AF9F50FE /* PasteBarPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarPanel.swift; sourceTree = "<group>"; };
 		55D1C0EC2BCE4129AE5D8954 /* PasteBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarView.swift; sourceTree = "<group>"; };
 		846F4BBE79D34DF898294F5A /* PasteBarPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarPosition.swift; sourceTree = "<group>"; };
+		2FC0D0012F40000100C0D001 /* PasteBarDisplayKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarDisplayKind.swift; sourceTree = "<group>"; };
+		2FC0D0032F40000100C0D001 /* PasteBarFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarFilter.swift; sourceTree = "<group>"; };
+		2FC0D0052F40000100C0D001 /* PasteBarHistoryItemAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarHistoryItemAdapter.swift; sourceTree = "<group>"; };
+		2FC0D0072F40000100C0D001 /* PasteBarSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarSelection.swift; sourceTree = "<group>"; };
+		2FC0D0092F40000100C0D001 /* PasteBarResultProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarResultProvider.swift; sourceTree = "<group>"; };
+		2FC0D00B2F40000100C0D001 /* PasteBarDisplayKindTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarDisplayKindTests.swift; sourceTree = "<group>"; };
+		2FC0D00D2F40000100C0D001 /* PasteBarResultProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteBarResultProviderTests.swift; sourceTree = "<group>"; };
 		3EBDD1E32BBEF22800C57500 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4762D6982467226100B3A2BA /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4762D69A2467226400B3A2BA /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -728,6 +742,8 @@
 				DA360DB21E3DF137005C6F6B /* HistoryTests.swift */,
 				DA1EDE422045B35300479723 /* HistoryDecoratorTests.swift */,
 				DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */,
+				2FC0D00B2F40000100C0D001 /* PasteBarDisplayKindTests.swift */,
+				2FC0D00D2F40000100C0D001 /* PasteBarResultProviderTests.swift */,
 				DA384E85232746D800603999 /* SearchTests.swift */,
 				DA696BD12401EEE900DE80CF /* SorterTests.swift */,
 				DA360DB41E3DF137005C6F6B /* Info.plist */,
@@ -836,8 +852,13 @@
 				DA05B5102C234CB1006980FE /* MaccyApp.swift */,
 				DA689FCB2C1D1D510009B887 /* MenuIcon.swift */,
 				DA20FA712B082DD600056DD5 /* Notifier.swift */,
+				2FC0D0012F40000100C0D001 /* PasteBarDisplayKind.swift */,
+				2FC0D0032F40000100C0D001 /* PasteBarFilter.swift */,
+				2FC0D0052F40000100C0D001 /* PasteBarHistoryItemAdapter.swift */,
 				2643BD06AABE48D5AF9F50FE /* PasteBarPanel.swift */,
 				846F4BBE79D34DF898294F5A /* PasteBarPosition.swift */,
+				2FC0D0092F40000100C0D001 /* PasteBarResultProvider.swift */,
+				2FC0D0072F40000100C0D001 /* PasteBarSelection.swift */,
 				DA689FC72C1D15140009B887 /* PinsPosition.swift */,
 				DA689FC52C1D14F10009B887 /* PopupPosition.swift */,
 				DAC14123232367B200FCFA30 /* Search.swift */,
@@ -1071,6 +1092,8 @@
 				DA1EDE432045B35300479723 /* HistoryDecoratorTests.swift in Sources */,
 				DAE2850223225BD90080E394 /* ColorImageTests.swift in Sources */,
 				DA384E86232746D800603999 /* SearchTests.swift in Sources */,
+				2FC0D00C2F40000100C0D001 /* PasteBarDisplayKindTests.swift in Sources */,
+				2FC0D00E2F40000100C0D001 /* PasteBarResultProviderTests.swift in Sources */,
 				DA696BD22401EEE900DE80CF /* SorterTests.swift in Sources */,
 				DA360DB31E3DF137005C6F6B /* HistoryTests.swift in Sources */,
 			);
@@ -1099,6 +1122,9 @@
 				DA243D122C2F64830012A27F /* ContentView.swift in Sources */,
 				DAD665662898A1C000975096 /* KeyChord.swift in Sources */,
 				CBC016F5D2CC4C4D9AC04077 /* PasteBarPanel.swift in Sources */,
+				2FC0D0022F40000100C0D001 /* PasteBarDisplayKind.swift in Sources */,
+				2FC0D0042F40000100C0D001 /* PasteBarFilter.swift in Sources */,
+				2FC0D0062F40000100C0D001 /* PasteBarHistoryItemAdapter.swift in Sources */,
 				DA689FC42C1CF0F00009B887 /* AppearanceSettingsPane.swift in Sources */,
 				2F1091D72F2B6E8400F5C454 /* AsyncView.swift in Sources */,
 				DAA072E72C423617006DDFD2 /* NSSize+DefaultsSerializable.swift in Sources */,
@@ -1110,6 +1136,8 @@
 				2FF2E94E2E774B5B0093D72C /* NavigationManager.swift in Sources */,
 				DA1969182C3F327500258481 /* SearchFieldView.swift in Sources */,
 				F9C4425A454F4A0696A62577 /* PasteBarPosition.swift in Sources */,
+				2FC0D00A2F40000100C0D001 /* PasteBarResultProvider.swift in Sources */,
+				2FC0D0082F40000100C0D001 /* PasteBarSelection.swift in Sources */,
 				DAE8F5D42C43262B00851CA9 /* Popup.swift in Sources */,
 				DA13D7DA2C1A223E00FA9E23 /* Clear.swift in Sources */,
 				DA13D7DB2C1A223E00FA9E23 /* Delete.swift in Sources */,
