@@ -7,6 +7,10 @@
 "PopupAtLastPosition" = "Last position";
 "PopupAtLastLocationReset" = "Reset position";
 "PopupAtTooltip" = "Change the location where popup appears.\nDefault: Cursor.";
+"PasteBarAt" = "Paste bar at:";
+"PasteBarAtBottom" = "Bottom";
+"PasteBarAtTop" = "Top";
+"PasteBarAtTooltip" = "Change the screen edge where the paste bar appears.\nDefault: Bottom.";
 "SearchVisibilityAlways" = "Always";
 "SearchVisibilityDuringSearch" = "During search";
 "ActiveScreen" = "Active screen";

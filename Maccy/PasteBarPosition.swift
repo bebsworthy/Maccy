@@ -11,9 +11,9 @@ enum PasteBarPosition: String, CaseIterable, Identifiable, CustomStringConvertib
   var description: String {
     switch self {
     case .bottom:
-      return "Bottom"
+      return NSLocalizedString("PasteBarAtBottom", tableName: "AppearanceSettings", comment: "")
     case .top:
-      return "Top"
+      return NSLocalizedString("PasteBarAtTop", tableName: "AppearanceSettings", comment: "")
     }
   }
 

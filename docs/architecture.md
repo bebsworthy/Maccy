@@ -14,7 +14,7 @@ The application is organized around a small set of singleton runtime services:
 - `History` owns clipboard history state and coordinates persistence.
 - `Storage` owns the SwiftData model container.
 
-The UI is SwiftUI hosted inside a custom `NSPanel` subclass rather than a normal SwiftUI scene.
+The primary popup UI is SwiftUI hosted inside a custom `NSPanel` subclass rather than a normal SwiftUI scene. The paste bar is a second SwiftUI/AppKit panel surface for visual clipboard-history navigation.
 
 ## Project Shape
 
@@ -46,7 +46,8 @@ Startup sequence:
 3. `Clipboard.shared` registers a hook that forwards new copies to `History.shared.add`.
 4. `Clipboard.shared.start()` begins polling `NSPasteboard`.
 5. Defaults observers keep clipboard polling, status item visibility, menu icon, and disabled state synchronized with settings.
-6. `applicationDidFinishLaunching` migrates defaults, disables unused global hotkeys, and creates the `FloatingPanel<ContentView>`.
+6. `applicationDidFinishLaunching` migrates defaults, disables unused global hotkeys, and creates the `FloatingPanel<ContentView>` popup.
+7. `AppDelegate` also creates `PasteBarPanel<PasteBarView>` and registers `KeyboardShortcuts.Name.pasteBar`, defaulting to Shift-Command-V.
 
 The status bar item is created lazily by `AppDelegate`. Normal clicks toggle the popup. Option-click toggles event ignoring, and Option-Shift-click ignores only the next clipboard event.
 
@@ -68,6 +69,8 @@ SwiftUI views receive `AppState` through the environment from `ContentView`.
 - `items`: the currently visible items after search filtering.
 
 This split lets search change the displayed list without discarding the full loaded history.
+
+The paste bar reads `History.all` through computed adapters and keeps its own local selection, active filter, expanded-preview state, and feedback state. It does not use `NavigationManager`, `History.items`, or the popup preview controller. While the paste bar is open, its local search text is mirrored to `History.searchQuery` without running popup search side effects; when the paste bar closes, the query is committed through the normal `History.searchQuery` path so the shared search field remains consistent.
 
 ## Clipboard Data Flow
 
@@ -148,6 +151,28 @@ The popup UI is hosted inside `FloatingPanel<ContentView>`, an `NSPanel` subclas
 
 Selection and keyboard navigation are centralized in `NavigationManager`. Views update selection through it instead of owning selection independently.
 
+### Paste Bar UI
+
+The paste bar is hosted in `PasteBarPanel<PasteBarView>`, a separate non-activating `NSPanel` owned by `AppDelegate`. It is independent from `FloatingPanel<ContentView>` so opening, closing, focus behavior, resizing, and placement do not interfere with the existing popup.
+
+`PasteBarPanel` is responsible for:
+
+- capturing the frontmost application before the panel opens
+- positioning the panel at the configured top or bottom screen edge through `PasteBarPosition`
+- closing on focus loss, Escape, outside click, or successful direct-paste actions
+- preserving the target application long enough for direct paste restoration
+
+`PasteBarView` composes the visual clipboard timeline:
+
+- local search field and filter chips
+- horizontally scrolling cards rendered by `PasteBarCardView`
+- local `PasteBarSelection` for current and previewed items
+- expanded preview overlay using `PreviewItemView`
+- feedback and empty-state surfaces
+- keyboard routing for left/right navigation, up/down aliases, Return, Shift-Return, Delete, pin/unpin, preview, Escape, Command-F, and Command-1 through Command-9 quick paste
+
+Paste bar action handling is delegated to `PasteBarActionDispatcher`. The dispatcher copies through `Clipboard`, reuses `History.deleteFromPasteBar` and `History.togglePinFromPasteBar`, and restores the captured target before direct paste. If target restoration or direct paste is unavailable, the selected item is copied and the paste bar remains open to show fallback feedback.
+
 ## Search and Sorting
 
 Search is implemented by `Search`.
@@ -163,6 +188,10 @@ Supported modes:
 
 Sorting is implemented by `Sorter` and controlled by defaults. Sorting first applies the selected sort strategy and then applies pin placement.
 
+The paste bar uses `PasteBarResultProvider` for local filtering and searching over `History.all`. It reuses the existing `Search` implementation and a computed searchable string from `PasteBarHistoryItemAdapter` instead of creating a separate search index. Filters are computed from existing Maccy data: all history, pinned, unpinned, source applications, and `PasteBarDisplayKind` groups.
+
+`PasteBarDisplayKind` is computed, not persisted. It classifies Maccy's stored pasteboard data and refinements such as file, folder, PDF, archive, image, rich text, HTML, color-like text, URL, email address, phone number, table-like text, code-like text, emoji, plain text, and unknown fallback. Adding new display kinds should be done by extending this classifier and the card rendering path, without changing the SwiftData model unless Maccy starts capturing new pasteboard types.
+
 ## Settings and Defaults
 
 User preferences are stored with the `Defaults` package. Keys are declared in `Defaults.Keys+Names.swift`.
@@ -175,6 +204,7 @@ Settings cover:
 - history size and clear behavior
 - paste behavior and formatting behavior
 - popup size, position, search visibility, and preview width
+- paste bar shortcut and top/bottom placement
 - menu bar icon behavior
 - pin placement and sorting
 

@@ -5,6 +5,7 @@ import Settings
 
 struct AppearanceSettingsPane: View {
   @Default(.popupPosition) private var popupAt
+  @Default(.pasteBarPosition) private var pasteBarPosition
   @Default(.popupScreen) private var popupScreen
   @Default(.pinTo) private var pinTo
   @Default(.imageMaxHeight) private var imageHeight
@@ -77,6 +78,17 @@ struct AppearanceSettingsPane: View {
             .disabled(windowPosition == _windowPosition.defaultValue)
           }
         }
+      }
+
+      Settings.Section(label: { Text("PasteBarAt", tableName: "AppearanceSettings") }) {
+        Picker("", selection: $pasteBarPosition) {
+          ForEach(PasteBarPosition.allCases) { position in
+            Text(position.description)
+          }
+        }
+        .labelsHidden()
+        .frame(width: 141, alignment: .leading)
+        .help(Text("PasteBarAtTooltip", tableName: "AppearanceSettings"))
       }
 
       Settings.Section(label: { Text("PinTo", tableName: "AppearanceSettings") }) {

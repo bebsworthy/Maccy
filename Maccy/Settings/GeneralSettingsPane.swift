@@ -45,6 +45,11 @@ struct GeneralSettingsPane: View {
           .help(Text("OpenTooltip", tableName: "GeneralSettings"))
       }
 
+      Settings.Section(label: { Text("OpenPasteBar", tableName: "GeneralSettings") }) {
+        KeyboardShortcuts.Recorder(for: .pasteBar)
+          .help(Text("OpenPasteBarTooltip", tableName: "GeneralSettings"))
+      }
+
       Settings.Section(label: { Text("Pin", tableName: "GeneralSettings") }) {
         KeyboardShortcuts.Recorder(for: .pin)
           .help(Text("PinTooltip", tableName: "GeneralSettings"))
