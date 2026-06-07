@@ -34,7 +34,7 @@ Milestones are ordered to keep each change buildable and reviewable. `M-001` est
 
 ### M-001: Add paste-bar invocation and panel shell
 
-Linked Spec: REQ-001, REQ-002, REQ-019, REQ-022, AC-001, AC-013
+Linked Spec: REQ-001, REQ-002, REQ-022, AC-001
 
 Goal:
 Open and close an empty paste-bar panel from a separate customizable shortcut without touching the existing popup panel or status item behavior.
@@ -45,7 +45,7 @@ Open and close an empty paste-bar panel from a separate customizable shortcut wi
   - Evidence: `KeyboardShortcuts.Name.pasteBar` defaults to `Shift-Command-V`; new `PasteBarPosition` and `Defaults.Keys.pasteBarPosition` exist without changing `.popup`.
 
 - [ ] TASK-002: Add `PasteBarPanel` and placement calculation
-  - Evidence: a dedicated paste-bar AppKit panel/controller positions itself at the top or bottom active-screen edge and does not write `Defaults[.windowSize]`, `Defaults[.windowPosition]`, or `AppState.shared.preview`.
+  - Evidence: a dedicated paste-bar AppKit panel/controller positions itself at the top or bottom active-screen edge, supports focus-loss/outside-click close and repeated-shortcut toggle close, is added to the `Maccy` target, and does not write `Defaults[.windowSize]`, `Defaults[.windowPosition]`, or `AppState.shared.preview`.
 
 - [ ] TASK-003: Wire paste-bar controller into `AppDelegate`
   - Depends On: TASK-001, TASK-002
@@ -53,7 +53,7 @@ Open and close an empty paste-bar panel from a separate customizable shortcut wi
 
 - [ ] TASK-004: Add a minimal `PasteBarView` shell
   - Depends On: TASK-002
-  - Evidence: the panel renders a focusable SwiftUI shell with empty/loading content, escape dismissal, and no dependency on `ContentView`.
+  - Evidence: the panel renders a focusable SwiftUI shell with empty/loading content, escape dismissal, explicit close/collapse control, and no dependency on `ContentView`; new source files are added to the `Maccy` target before validation.
 
 #### Validation
 
@@ -62,11 +62,11 @@ Open and close an empty paste-bar panel from a separate customizable shortcut wi
 
 - [ ] VAL-002: Verify shortcut isolation manually
   - Covers: T-002, T-008
-  - Evidence: `Shift-Command-V` opens/dismisses the empty paste bar, `Shift-Command-C` still opens the existing popup, and status item click still toggles the popup.
+  - Evidence: `Shift-Command-V` opens and toggles closed the empty paste bar, `Escape` dismisses it, explicit close/collapse dismisses it, outside click/focus loss dismisses it, `Shift-Command-C` still opens the existing popup, and status item click still toggles the popup.
 
 #### Done When
 
-- [ ] Paste-bar invocation is independently registered and customizable.
+- [ ] Paste-bar invocation is independently registered with the default shortcut.
 - [ ] The paste-bar panel opens at the configured top or bottom edge.
 - [ ] The existing popup panel remains unchanged in manual validation.
 
@@ -84,7 +84,7 @@ Produce paste-bar-ready card data from existing `History.all` without new SwiftD
   - Evidence: `Search` accepts a small searchable-text protocol or generic input; `HistoryItemDecorator` preserves title-only behavior and existing `SearchTests` still pass.
 
 - [ ] TASK-006: Add paste-bar display contracts
-  - Evidence: `PasteBarDisplayKind`, `PasteBarFilter`, `PasteBarHistoryItemAdapter`, and `PasteBarSelection` exist as computed/in-memory types with no SwiftData migration.
+  - Evidence: `PasteBarDisplayKind`, `PasteBarFilter`, `PasteBarHistoryItemAdapter`, and `PasteBarSelection` exist as computed/in-memory types with no SwiftData migration, and new source files are added to the `Maccy` target.
 
 - [ ] TASK-007: Implement display-kind classification and metadata extraction
   - Depends On: TASK-006
@@ -92,7 +92,7 @@ Produce paste-bar-ready card data from existing `History.all` without new SwiftD
 
 - [ ] TASK-008: Implement paste-bar result provider
   - Depends On: TASK-005, TASK-006, TASK-007
-  - Evidence: provider reads `History.all`, applies active filter and local query, sorts visible adapters by `HistoryItem.lastCopiedAt` descending, and does not mutate `History.items`, `History.searchQuery`, `AppState.shared.navigator`, or popup resize state.
+  - Evidence: provider reads `History.all`, applies active filter and local query, sorts visible adapters by `HistoryItem.lastCopiedAt` descending, is added to the `Maccy` target, and does not mutate `History.items`, `History.searchQuery`, `AppState.shared.navigator`, or popup resize state.
 
 - [ ] TASK-009: Add paste-bar filter generation
   - Depends On: TASK-008
@@ -102,7 +102,7 @@ Produce paste-bar-ready card data from existing `History.all` without new SwiftD
 
 - [ ] VAL-003: Run search and adapter unit tests
   - Covers: T-003, T-004, T-005
-  - Evidence: `xcodebuild test -project Maccy.xcodeproj -scheme Maccy -testPlan Maccy -destination 'platform=macOS' -only-testing:MaccyTests/SearchTests -only-testing:MaccyTests/PasteBarDisplayKindTests -only-testing:MaccyTests/PasteBarResultProviderTests` passes.
+  - Evidence: new test files are added to the `MaccyTests` target and `xcodebuild test -project Maccy.xcodeproj -scheme Maccy -testPlan Maccy -destination 'platform=macOS' -only-testing:MaccyTests/SearchTests -only-testing:MaccyTests/PasteBarDisplayKindTests -only-testing:MaccyTests/PasteBarResultProviderTests` passes.
 
 - [ ] VAL-004: Review stored-history privacy boundary
   - Covers: AC-010
@@ -128,11 +128,14 @@ Execute copy, paste, paste-without-formatting, delete, pin/unpin, and preview co
   - Evidence: `Accessibility.isTrusted` exposes `AXIsProcessTrustedWithOptions(nil)` status, and `AccessibilityTrustChecking` can be injected in tests.
 
 - [ ] TASK-011: Add paste-bar clipboard writer
-  - Evidence: `PasteBarClipboardWriting.copy(item:removeFormatting:) -> Result<Void, Error>` reports success/failure and production writes through Maccy's clipboard-copy behavior.
+  - Evidence: `PasteBarClipboardWriting.copy(item:removeFormatting:) -> Result<Void, Error>` reports success/failure, production writes through Maccy's clipboard-copy behavior, and new source files are added to the `Maccy` target.
+
+- [ ] TASK-025: Capture and restore the direct-paste target
+  - Evidence: paste-bar opening records the previous frontmost app/window context, paste actions order out or close the paste-bar panel before synthetic paste, reactivate the previous target before `Clipboard.paste()`, and return fallback feedback when the target cannot be restored.
 
 - [ ] TASK-012: Add paste-bar action dispatcher
-  - Depends On: TASK-010, TASK-011
-  - Evidence: dispatcher returns `PasteBarActionResult`, checks trust before synthetic paste, supports copy/paste/plain-text paste, and leaves the bar recoverable on failure.
+  - Depends On: TASK-010, TASK-011, TASK-025
+  - Evidence: dispatcher returns `PasteBarActionResult`, checks trust before synthetic paste, restores the previous paste target before calling `Clipboard.paste()`, closes only after successful action close timing is satisfied, supports copy/paste/plain-text paste, and leaves the bar recoverable on failure.
 
 - [ ] TASK-013: Add side-effect-controlled history mutations
   - Depends On: TASK-012
@@ -146,7 +149,7 @@ Execute copy, paste, paste-without-formatting, delete, pin/unpin, and preview co
 
 - [ ] VAL-005: Run action dispatcher unit tests
   - Covers: T-009
-  - Evidence: `xcodebuild test -project Maccy.xcodeproj -scheme Maccy -testPlan Maccy -destination 'platform=macOS' -only-testing:MaccyTests/PasteBarActionDispatcherTests` passes.
+  - Evidence: new test files are added to the `MaccyTests` target and `xcodebuild test -project Maccy.xcodeproj -scheme Maccy -testPlan Maccy -destination 'platform=macOS' -only-testing:MaccyTests/PasteBarActionDispatcherTests` passes.
 
 - [ ] VAL-006: Run clipboard regression tests
   - Evidence: `xcodebuild test -project Maccy.xcodeproj -scheme Maccy -testPlan Maccy -destination 'platform=macOS' -only-testing:MaccyTests/ClipboardTests -only-testing:MaccyTests/HistoryTests` passes.
@@ -155,6 +158,7 @@ Execute copy, paste, paste-without-formatting, delete, pin/unpin, and preview co
 
 - [ ] Paste-bar actions never call `History.select`.
 - [ ] Missing accessibility permission returns copied-fallback behavior.
+- [ ] Direct paste restores the app that was active before the paste bar opened or falls back visibly.
 - [ ] Copy failure is testable through an injected failing clipboard writer.
 - [ ] Delete and pin/unpin refresh paste-bar-local state without popup side effects.
 
@@ -169,11 +173,11 @@ Render the paste bar as a keyboard-first horizontal visual timeline with rich ca
 #### Tasks
 
 - [ ] TASK-015: Implement timeline and card views
-  - Evidence: `PasteBarView` renders a horizontal scroll row of stable card dimensions with header, preview body, footer metadata, focus state, hover state, and quick shortcut labels.
+  - Evidence: `PasteBarView` renders a horizontal scroll row of stable card dimensions with header, preview body, footer metadata, focus state, hover state, and quick shortcut labels; new source files are added to the `Maccy` target.
 
 - [ ] TASK-016: Implement keyboard and pointer navigation
   - Depends On: TASK-015
-  - Evidence: local `PasteBarSelection` handles Left/Right, Up/Down aliases, Return, Shift-Return, Escape, mouse click, context-menu invocation, and selected-item visibility without writing `NavigationManager`.
+  - Evidence: local `PasteBarSelection` handles Left/Right, Up/Down aliases, Return, Shift-Return, Escape, `KeyboardShortcuts.Name.togglePreview` or `KeyChord.togglePreview`, mouse click, context-menu invocation, and selected-item visibility without writing `NavigationManager`.
 
 - [ ] TASK-017: Implement search and filter controls
   - Depends On: TASK-015
@@ -181,7 +185,7 @@ Render the paste bar as a keyboard-first horizontal visual timeline with rich ca
 
 - [ ] TASK-018: Implement card previews and expanded preview
   - Depends On: TASK-015
-  - Evidence: text, rich text, HTML, code-like text, image, file/folder/PDF/archive, color, emoji, and unknown cards have graceful previews; expanded preview uses popup-independent local presentation state.
+  - Evidence: text, rich text, HTML, code-like text, image, file/folder/PDF/archive, color, emoji, and unknown cards have graceful previews; expanded preview opens from context menu and the existing preview keyboard shortcut by setting `PasteBarSelection.previewedItemId` or equivalent paste-bar-local state, without writing `AppState.shared.preview`.
 
 - [ ] TASK-019: Implement feedback and empty states
   - Depends On: TASK-012, TASK-015
@@ -198,7 +202,7 @@ Render the paste bar as a keyboard-first horizontal visual timeline with rich ca
 
 - [ ] VAL-008: Manual visual design QA
   - Covers: T-001, T-006, T-007
-  - Evidence: checklist passes for top/bottom placement, light/dark mode, reduced motion, keyboard-only navigation, horizontal overflow, card truncation, focus visibility, empty states, and failure feedback.
+  - Evidence: checklist passes for top/bottom placement, light/dark mode, reduced motion, keyboard-only navigation including preview shortcut, horizontal overflow, card truncation, focus visibility, empty states, disabled direct-paste permission copied fallback, capture-time ignored item absence, and failure feedback.
 
 #### Done When
 
@@ -222,8 +226,8 @@ Make the feature configurable, verify it does not regress existing Maccy workflo
 - [ ] TASK-022: Add paste-bar placement setting
   - Evidence: `AppearanceSettingsPane` exposes bottom/top `PasteBarPosition` with English strings and does not reuse `PopupPosition`.
 
-- [ ] TASK-023: Update project membership and localized resource references
-  - Evidence: new Swift files and English strings are included in `Maccy.xcodeproj`; build succeeds from a clean checkout.
+- [ ] TASK-023: Audit project membership and localized resource references
+  - Evidence: all source and test files added in earlier milestones are already included in the correct `Maccy.xcodeproj` targets, new English strings are included, and build succeeds from a clean checkout.
 
 - [ ] TASK-024: Update architecture documentation
   - Linked Spec: DOC-001, DOC-002, DOC-003, DOC-004
@@ -236,7 +240,7 @@ Make the feature configurable, verify it does not regress existing Maccy workflo
 
 - [ ] VAL-010: Manual end-to-end workflow regression
   - Covers: T-002, T-008
-  - Evidence: paste bar shortcut customization persists across restart; top/bottom placement works; existing popup shortcut, status item click, vertical navigation, preview slideout, and existing settings remain unchanged.
+  - Evidence: paste bar shortcut customization persists across restart; top/bottom placement works; direct paste targets the text field in the app that was active before the paste bar opened; repeated paste-bar shortcut, explicit close, outside click, focus loss, and successful actions dismiss as specified; existing popup shortcut, status item click, vertical navigation, preview slideout, and existing settings remain unchanged.
 
 - [ ] VAL-011: Lint spec and plan artifacts
   - Trace Rationale: validates artifact readiness for the implementation docs, not an individual runtime requirement.
